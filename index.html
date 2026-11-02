@@ -60,7 +60,7 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 <div class="tabs"><button id="ta" class="on">Barang</button><button id="tb">Belanja</button><button id="tc">Grosir</button></div>
 
 <div id="pa">
-  <div class="bar"><input id="q" placeholder="Cari barang…" autocomplete="off"><button class="btn pri" id="add">+ Baru</button></div>
+  <div class="bar"><input id="q" placeholder="Cari barang…" autocomplete="off"><button class="btn" id="kat">Katalog</button><button class="btn pri" id="add">+ Baru</button></div>
   <div id="list"></div>
 </div>
 
@@ -85,9 +85,17 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
   <b id="mt">Barang baru</b>
   <label for="f1">Nama barang</label><input id="f1" placeholder="Roma Kelapa">
   <label for="f2">Satuan</label>
-  <select id="f2"><option>pcs</option><option>renceng</option><option>pack</option><option>box</option><option>dus</option><option>bal</option></select>
+  <select id="f2"><option>pcs</option><option>renceng</option><option>pack</option><option>box</option><option>dus</option><option>bal</option><option>sachet</option><option>bungkus</option><option>bks</option></select>
   <label for="f3">Jumlah belanja biasa</label><input id="f3" type="number" min="1" value="1" inputmode="numeric">
   <div class="acts" style="margin-top:14px"><button class="btn" id="fc">Batal</button><button class="btn del" id="fd">Hapus</button><button class="btn pri" id="fs">Simpan</button></div>
+</div></div>
+
+<div class="modal" id="mk"><div class="sheet" style="max-height:88vh;display:flex;flex-direction:column">
+  <b>Tambah dari katalog</b>
+  <div class="un" style="margin:4px 0 8px">Centang barang yang dijual di warung Anda. Barang yang sudah ada tidak ditampilkan.</div>
+  <input id="ks" placeholder="Cari…" autocomplete="off">
+  <div id="kl" style="overflow:auto;flex:1;margin:8px 0"></div>
+  <div class="acts"><button class="btn" id="kc">Batal</button><button class="btn pri" id="kadd">Tambah (0)</button></div>
 </div></div>
 
 <div class="modal" id="mg"><div class="sheet">
@@ -97,6 +105,7 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
   <div class="acts" style="margin-top:14px"><button class="btn" id="gc">Batal</button><button class="btn pri" id="gs">Simpan</button></div>
 </div></div>
 
+<script src="katalog.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const KEY="stokjajan2";
@@ -295,6 +304,35 @@ $("gs").onclick=()=>{
   if(editG){const g=S.grosir.find(x=>x.id===editG);g.name=name;g.wa=wa}
   else{const id=uid();S.grosir.push({id,name,wa});if(!S.lastG)S.lastG=id}
   save();$("mg").classList.remove("show");render();
+};
+
+const kSel=new Set();
+function kRows(){
+  const q=$("ks").value.trim().toLowerCase();
+  const have=new Set(S.items.map(i=>i.name.toLowerCase()));
+  return CATALOG.filter(c=>!have.has(c.n.toLowerCase())&&c.n.toLowerCase().includes(q));
+}
+function renderK(){
+  const rows=kRows();let last="",html="";
+  rows.forEach(c=>{
+    if(c.g!==last){html+=`<div class="sec">${esc(c.g)}</div>`;last=c.g}
+    html+=`<label class="ck row" style="margin:6px 0"><input type="checkbox" data-k="${esc(c.n)}" ${kSel.has(c.n)?"checked":""}><b>${esc(c.n)}</b><span class="un">${esc(c.u)}</span></label>`;
+  });
+  $("kl").innerHTML=html||`<div class="empty">Semua barang katalog sudah ada, atau tidak cocok dengan pencarian.</div>`;
+  $("kadd").textContent="Tambah ("+kSel.size+")";
+  $("kadd").disabled=!kSel.size;
+}
+$("kat").onclick=()=>{kSel.clear();$("ks").value="";renderK();$("mk").classList.add("show")};
+$("kc").onclick=()=>$("mk").classList.remove("show");
+$("ks").oninput=renderK;
+$("kl").addEventListener("change",e=>{
+  const n=e.target.dataset.k;if(!n)return;
+  e.target.checked?kSel.add(n):kSel.delete(n);
+  $("kadd").textContent="Tambah ("+kSel.size+")";$("kadd").disabled=!kSel.size;
+});
+$("kadd").onclick=()=>{
+  CATALOG.filter(c=>kSel.has(c.n)).forEach(c=>S.items.push({id:uid(),name:c.n,unit:c.u,def:c.d,st:null,qty:0,sel:false,ord:false}));
+  save();$("mk").classList.remove("show");render();
 };
 
 tab("a");

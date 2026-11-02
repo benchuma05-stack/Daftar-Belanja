@@ -1,5 +1,5 @@
 // Setiap kali file diubah, naikkan angka versi ini (v2 -> v3, dst.) agar HP mengambil versi baru.
-const CACHE = "stok-jajanan-v2";
+const CACHE = "stok-jajanan-v3";
 const FILES = ["./", "index.html", "manifest.json", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {
