@@ -57,7 +57,7 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 .hide{display:none}
 </style></head><body>
 <h1>🍬 Stok Jajanan</h1>
-<div class="tabs"><button id="ta" class="on">Barang</button><button id="tb">Belanja</button><button id="tc">Grosir</button></div>
+<div class="tabs"><button id="ta" class="on">Barang</button><button id="tb">Belanja</button><button id="tr">Riwayat</button><button id="tc">Grosir</button></div>
 
 <div id="pa">
   <div class="bar"><input id="q" placeholder="Cari barang…" autocomplete="off"><button class="btn" id="kat">Katalog</button><button class="btn pri" id="add">+ Baru</button></div>
@@ -69,12 +69,14 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
   <select id="gsel"></select>
   <div class="bar" style="justify-content:space-between;margin-top:8px"><span class="un">Centang barang yang dibeli dari grosir ini</span><button class="btn" id="pall">Pilih semua</button></div>
   <div id="need"></div>
-  <div id="ord"></div>
+  <div class="acts" style="margin:10px 0"><button class="btn del" id="kosong">Kosongkan daftar</button></div>
   <div class="sec">Pratinjau pesan</div>
   <div class="pv" id="pv"></div>
   <div class="acts"><button class="btn pri" id="bwa">Kirim teks ke WA</button><button class="btn" id="bpng">Kirim tabel PNG</button></div>
-  <div class="acts" style="margin-top:8px"><button class="btn" id="bcopy">Salin teks</button><button class="btn" id="bord">Tandai dipesan</button></div>
+  <div class="acts" style="margin-top:8px"><button class="btn" id="bcopy">Salin teks</button><button class="btn pri" id="bpindah">Pindah ke riwayat</button></div>
 </div>
+
+<div id="pr" class="hide"><div id="rlist"></div></div>
 
 <div id="pc" class="hide">
   <div class="bar"><span class="un" style="flex:1">Daftar grosir dan nomor WA</span><button class="btn pri" id="gadd">+ Grosir</button></div>
@@ -117,13 +119,14 @@ const find=id=>S.items.find(i=>i.id===id);
 const tglID=()=>new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
 
 function load(){
-  try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d)return d}catch(e){}
+  try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){d.riwayat=d.riwayat||[];return d}}catch(e){}
   let items=[];
   try{const o=JSON.parse(localStorage.getItem("stokjajan")||"null");if(o&&o.items)items=o.items}catch(e){}
   if(!items.length&&!localStorage.getItem("stokjajan_init"))items=SEED.map(s=>({id:uid(),name:s[0],unit:s[1],def:s[2],st:null,qty:0}));
-  return {items:items.map(i=>({sel:false,ord:false,...i})),grosir:[],lastG:""};
+  return {items:items.map(i=>({sel:false,...i})),grosir:[],lastG:"",riwayat:[]};
 }
 let S=load();
+S.items.forEach(i=>{if(i.ord){i.st=null;i.qty=0}i.ord=false});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 function stepper(i){return `<div class="step"><button data-a="m" data-id="${i.id}">−</button><b>${i.qty}</b><button data-a="p" data-id="${i.id}">+</button><span>${esc(i.unit)}</span></div>`}
@@ -145,28 +148,38 @@ function renderBarang(){
   $("list").innerHTML=arr.length?arr.map(i=>`<div class="row"><div class="top"><button class="nm" data-a="e" data-id="${i.id}">${esc(i.name)} <span class="un">· ${esc(i.unit)}</span></button><div class="st"><button class="h ${i.st==="h"?"on":""}" data-a="h" data-id="${i.id}">Habis</button><button class="t ${i.st==="t"?"on":""}" data-a="t" data-id="${i.id}">Tipis</button></div></div>${i.st?stepper(i):""}</div>`).join(""):`<div class="empty">Belum ada barang. Tap “+ Baru”.</div>`;
 }
 function renderBelanja(){
-  const need=S.items.filter(i=>i.st&&!i.ord).sort(byName);
-  const ord=S.items.filter(i=>i.st&&i.ord).sort(byName);
+  const need=S.items.filter(i=>i.st).sort(byName);
   const sel=selRows();
   $("tb").textContent="Belanja"+(need.length?" ("+need.length+")":"");
   $("need").innerHTML=need.length?need.map(i=>`<div class="row"><label class="ck"><input type="checkbox" data-a="c" data-id="${i.id}" ${i.sel?"checked":""}><b>${esc(i.name)}</b><span class="badge ${i.st}">${i.st==="h"?"Habis":"Tipis"}</span></label>${i.sel?stepper(i):""}</div>`).join(""):`<div class="empty">Tidak ada barang tipis/habis. Tandai dulu di tab Barang.</div>`;
-  $("ord").innerHTML=ord.length?`<div class="sec">Sudah dipesan</div>`+ord.map(i=>`<div class="row"><div class="top"><span>✓ ${esc(i.name)} · ${i.qty} ${esc(i.unit)}</span><button class="btn" data-a="d" data-id="${i.id}">Sudah datang</button></div></div>`).join(""):"";
   $("pv").textContent=sel.length?build(sel,gSel()):"Belum ada barang dipilih.";
-  ["bwa","bpng","bcopy","bord"].forEach(id=>$(id).disabled=!sel.length);
+  ["bwa","bpng","bcopy","bpindah"].forEach(id=>$(id).disabled=!sel.length);
+  $("kosong").disabled=!need.length;
   $("pall").disabled=!need.length;
   $("pall").textContent=need.length&&need.every(i=>i.sel)?"Batal pilih":"Pilih semua";
+}
+const fmtTgl=iso=>new Date(iso).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+function renderRiwayat(){
+  const recs=[...S.riwayat].sort((a,b)=>b.date.localeCompare(a.date));
+  if(!recs.length){$("rlist").innerHTML=`<div class="empty">Belum ada riwayat. Di tab Belanja, centang barang, pilih grosir, lalu tekan “Pindah ke riwayat”.</div>`;return}
+  const groups={};
+  recs.forEach(r=>{(groups[r.grosir]=groups[r.grosir]||[]).push(r)});
+  $("rlist").innerHTML=Object.keys(groups).map(name=>
+    `<div class="sec">${esc(name)} · ${groups[name].length} kali belanja</div>`+
+    groups[name].map(r=>`<div class="row"><div class="top"><div><b>${fmtTgl(r.date)}</b><div class="un">${r.items.length} barang</div></div><div class="acts2"><button class="btn pri" data-a="ulang" data-id="${r.id}">Belanja ulang</button><button class="btn del" data-a="rdel" data-id="${r.id}">Hapus</button></div></div><details><summary class="un" style="margin-top:6px">Lihat isi</summary>${r.items.map(it=>`<div>${esc(it.name)} – ${it.qty} ${esc(it.unit)}</div>`).join("")}</details></div>`).join("")
+  ).join("");
 }
 function renderGrosir(){
   $("glist").innerHTML=S.grosir.length?S.grosir.map(g=>`<div class="row"><div class="top"><div><b>${esc(g.name)}</b><div class="un">${esc(g.wa||"nomor WA belum diisi")}</div></div><div class="acts2"><button class="btn" data-a="ge" data-id="${g.id}">Ubah</button><button class="btn del" data-a="gd" data-id="${g.id}">Hapus</button></div></div></div>`).join(""):`<div class="empty">Belum ada grosir. Tambah grosir pertama Anda.</div>`;
   $("gsel").innerHTML=`<option value="">— Pilih grosir —</option>`+S.grosir.map(g=>`<option value="${g.id}" ${g.id===S.lastG?"selected":""}>${esc(g.name)}</option>`).join("");
 }
-function render(){renderBarang();renderBelanja();renderGrosir()}
+function render(){renderBarang();renderBelanja();renderRiwayat();renderGrosir()}
 
 function tab(k){
-  const T={a:"pa",b:"pb",c:"pc"};
+  const T={a:"pa",b:"pb",r:"pr",c:"pc"};
   for(const x in T){$(T[x]).classList.toggle("hide",x!==k);$("t"+x).classList.toggle("on",x===k)}
 }
-$("ta").onclick=()=>tab("a");$("tb").onclick=()=>tab("b");$("tc").onclick=()=>tab("c");
+$("ta").onclick=()=>tab("a");$("tb").onclick=()=>tab("b");$("tr").onclick=()=>tab("r");$("tc").onclick=()=>tab("c");
 $("q").oninput=render;
 
 document.body.addEventListener("click",e=>{
@@ -179,6 +192,8 @@ document.body.addEventListener("click",e=>{
     if(g&&confirm("Hapus grosir "+g.name+"?")){S.grosir=S.grosir.filter(x=>x.id!==g.id);if(S.lastG===g.id)S.lastG="";save();render()}
     return;
   }
+  if(a==="ulang"){belanjaUlang(b.dataset.id);return}
+  if(a==="rdel"){const r=S.riwayat.find(x=>x.id===b.dataset.id);if(r&&confirm("Hapus riwayat "+r.grosir+" ("+fmtTgl(r.date)+")?")){S.riwayat=S.riwayat.filter(x=>x.id!==r.id);save();render()}return}
   const i=find(b.dataset.id);
   if(!i)return;
   if(a==="e"){openM(i.id);return}
@@ -210,11 +225,6 @@ $("bwa").onclick=()=>{const r=selRows();if(r.length)window.open(waLink(build(r,g
 $("bcopy").onclick=async()=>{
   try{await navigator.clipboard.writeText($("pv").textContent)}catch(e){}
   $("bcopy").textContent="Tersalin ✓";setTimeout(()=>$("bcopy").textContent="Salin teks",1500);
-};
-$("bord").onclick=()=>{
-  if(!confirm("Tandai barang terpilih sebagai sudah dipesan?"))return;
-  S.items.filter(i=>i.sel).forEach(i=>{i.ord=true;i.sel=false});
-  save();render();
 };
 
 function drawPNG(rows,g){
@@ -334,6 +344,35 @@ $("kadd").onclick=()=>{
   CATALOG.filter(c=>kSel.has(c.n)).forEach(c=>S.items.push({id:uid(),name:c.n,unit:c.u,def:c.d,st:null,qty:0,sel:false,ord:false}));
   save();$("mk").classList.remove("show");render();
 };
+
+$("kosong").onclick=()=>{
+  const n=S.items.filter(i=>i.st&&!i.ord).length;
+  if(!n||!confirm("Kosongkan daftar belanja? "+n+" barang yang belum dipesan akan dihapus dari daftar.\n\nBarang yang sudah dipesan tidak ikut terhapus."))return;
+  S.items.filter(i=>i.st&&!i.ord).forEach(i=>{i.st=null;i.sel=false;i.qty=0});
+  save();render();
+};
+
+$("bpindah").onclick=()=>{
+  const sel=selRows(),g=gSel();
+  if(!sel.length)return;
+  if(!g){alert("Pilih grosir dulu di atas, supaya riwayat tercatat per grosir.");return}
+  if(!confirm(`Pindahkan ${sel.length} barang ke riwayat ${g.name}? Barang akan keluar dari daftar belanja.`))return;
+  S.riwayat.push({id:uid(),date:new Date().toISOString(),grosir:g.name,gid:g.id,items:sel.map(i=>({name:i.name,unit:i.unit,qty:i.qty}))});
+  sel.forEach(i=>{i.st=null;i.sel=false;i.qty=0});
+  save();render();
+};
+function belanjaUlang(id){
+  const r=S.riwayat.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`Pindahkan ${r.items.length} barang dari riwayat ${r.grosir} ke daftar belanja?`))return;
+  r.items.forEach(it=>{
+    let i=S.items.find(x=>x.name.toLowerCase()===it.name.toLowerCase());
+    if(!i){i={id:uid(),name:it.name,unit:it.unit,def:it.qty,st:null,qty:0,sel:false,ord:false};S.items.push(i)}
+    i.st=i.st||"t";i.qty=it.qty;i.sel=true;
+  });
+  const g=S.grosir.find(x=>x.id===r.gid)||S.grosir.find(x=>x.name===r.grosir);
+  S.lastG=g?g.id:"";
+  save();tab("b");render();
+}
 
 tab("a");
 render();
