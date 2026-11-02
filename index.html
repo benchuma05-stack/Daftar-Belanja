@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Stok Jajanan">
-
 <style>
 :root{--bg:#f6f5f1;--card:#fff;--tx:#1c1b18;--mu:#6b685f;--bd:#e3e0d6;--ac:#0f7b5f;--on:#fff;--rd:#c0392b;--rdb:#fdecea;--yl:#8a5a00;--ylb:#fff1cc;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151512;--card:#201f1b;--tx:#f0eee6;--mu:#a09c90;--bd:#38362f;--ac:#3fc59d;--on:#08251c;--rd:#ff8a7a;--rdb:#3a1f1b;--yl:#ffc659;--ylb:#3b2f10;color-scheme:dark}}
@@ -20,11 +19,12 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{padding:0 12px 90px;max-width:640px;margin:0 auto}
 h1{font-size:20px;margin:14px 0 8px}
 .tabs{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:6px 0;z-index:5}
-.tabs button{flex:1;padding:11px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font-size:15px;font-weight:600}
+.tabs button{flex:1;padding:11px 4px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-size:15px;font-weight:600}
 .tabs button.on{background:var(--ac);color:var(--on);border-color:var(--ac)}
-.bar{display:flex;gap:8px;margin:8px 0}
-input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}
-.btn{padding:11px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-weight:600;white-space:nowrap;text-decoration:none;text-align:center;display:inline-block}
+.bar{display:flex;gap:8px;margin:8px 0;align-items:center}
+input,select{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}
+.btn{padding:11px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-weight:600;white-space:nowrap;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:default}
 .btn.pri{background:var(--ac);color:var(--on);border-color:var(--ac)}
 .btn.del{color:var(--rd)}
 .row{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin:8px 0}
@@ -39,9 +39,17 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-
 .step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:20px}
 .step b{min-width:44px;text-align:center;font-size:18px}
 .step span{color:var(--mu);font-size:14px}
-.empty{color:var(--mu);text-align:center;padding:30px 10px}
-.msg{white-space:pre-wrap;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;margin:10px 0}
-.acts{display:flex;gap:8px;flex-wrap:wrap}.acts .btn{flex:1}
+.ck{display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
+.ck input{width:24px;height:24px;flex:0 0 24px;accent-color:var(--ac);padding:0}
+.ck b{flex:1}
+.badge{font-size:12px;padding:3px 9px;border-radius:999px;font-weight:600}
+.badge.h{background:var(--rdb);color:var(--rd)}
+.badge.t{background:var(--ylb);color:var(--yl)}
+.sec{font-size:14px;color:var(--mu);margin:16px 4px 4px;font-weight:600}
+.empty{color:var(--mu);text-align:center;padding:24px 10px}
+.pv{white-space:pre-wrap;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;margin:6px 0}
+.acts{display:flex;gap:8px}.acts .btn{flex:1}
+.acts2{display:flex;gap:6px}
 label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .modal.show{display:flex}
@@ -49,7 +57,7 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 .hide{display:none}
 </style></head><body>
 <h1>🍬 Stok Jajanan</h1>
-<div class="tabs"><button id="ta" class="on">Barang</button><button id="tb">Belanja</button></div>
+<div class="tabs"><button id="ta" class="on">Barang</button><button id="tb">Belanja</button><button id="tc">Grosir</button></div>
 
 <div id="pa">
   <div class="bar"><input id="q" placeholder="Cari barang…" autocomplete="off"><button class="btn pri" id="add">+ Baru</button></div>
@@ -57,15 +65,20 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 </div>
 
 <div id="pb" class="hide">
-  <div id="shop"></div>
-  <label for="wa">Nomor WA grosir (opsional)</label>
-  <input id="wa" inputmode="tel" placeholder="08123456789">
-  <div class="msg" id="msg"></div>
-  <div class="acts">
-    <a class="btn pri" id="send" target="_blank" rel="noopener">Kirim ke WhatsApp</a>
-    <button class="btn" id="copy">Salin teks</button>
-  </div>
-  <div class="acts" style="margin-top:8px"><button class="btn del" id="done">Selesai belanja (kosongkan)</button></div>
+  <label for="gsel">Kirim ke grosir</label>
+  <select id="gsel"></select>
+  <div class="bar" style="justify-content:space-between;margin-top:8px"><span class="un">Centang barang yang dibeli dari grosir ini</span><button class="btn" id="pall">Pilih semua</button></div>
+  <div id="need"></div>
+  <div id="ord"></div>
+  <div class="sec">Pratinjau pesan</div>
+  <div class="pv" id="pv"></div>
+  <div class="acts"><button class="btn pri" id="bwa">Kirim teks ke WA</button><button class="btn" id="bpng">Kirim tabel PNG</button></div>
+  <div class="acts" style="margin-top:8px"><button class="btn" id="bcopy">Salin teks</button><button class="btn" id="bord">Tandai dipesan</button></div>
+</div>
+
+<div id="pc" class="hide">
+  <div class="bar"><span class="un" style="flex:1">Daftar grosir dan nomor WA</span><button class="btn pri" id="gadd">+ Grosir</button></div>
+  <div id="glist"></div>
 </div>
 
 <div class="modal" id="md"><div class="sheet">
@@ -74,65 +87,185 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
   <label for="f2">Satuan</label>
   <select id="f2"><option>pcs</option><option>renceng</option><option>pack</option><option>box</option><option>dus</option><option>bal</option></select>
   <label for="f3">Jumlah belanja biasa</label><input id="f3" type="number" min="1" value="1" inputmode="numeric">
-  <div class="acts" style="margin-top:14px">
-    <button class="btn" id="fc">Batal</button><button class="btn del" id="fd">Hapus</button><button class="btn pri" id="fs">Simpan</button>
-  </div>
+  <div class="acts" style="margin-top:14px"><button class="btn" id="fc">Batal</button><button class="btn del" id="fd">Hapus</button><button class="btn pri" id="fs">Simpan</button></div>
+</div></div>
+
+<div class="modal" id="mg"><div class="sheet">
+  <b id="gt">Grosir baru</b>
+  <label for="gn">Nama grosir</label><input id="gn" placeholder="Grosir Berkah">
+  <label for="gw">Nomor WA</label><input id="gw" inputmode="tel" placeholder="08123456789">
+  <div class="acts" style="margin-top:14px"><button class="btn" id="gc">Batal</button><button class="btn pri" id="gs">Simpan</button></div>
 </div></div>
 
 <script>
 const $=id=>document.getElementById(id);
-const seed=[["Roma Kelapa","renceng",5],["Roma Malkist Abon","renceng",5],["Nabati Richeese","renceng",3],["Nabati Wafer Coklat","renceng",3]];
-let S={items:[],wa:""},editId=null,uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-try{const d=JSON.parse(localStorage.getItem("stokjajan")||"null");if(d){S.items=d.items||[];S.wa=d.wa||""}}catch(e){}
-if(!S.items.length&&!localStorage.getItem("stokjajan_init")){S.items=seed.map(s=>({id:uid(),name:s[0],unit:s[1],def:s[2],st:null,qty:0}))}
-function save(){try{localStorage.setItem("stokjajan",JSON.stringify(S));localStorage.setItem("stokjajan_init","1")}catch(e){}}
-const find=id=>S.items.find(i=>i.id===id);
+const KEY="stokjajan2";
+const SEED=[["Roma Kelapa","renceng",5],["Roma Malkist Abon","renceng",5],["Nabati Richeese","renceng",3],["Nabati Wafer Coklat","renceng",3]];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>{const d=document.createElement("div");d.textContent=s;return d.innerHTML};
 const byName=(a,b)=>a.name.localeCompare(b.name,"id");
+const find=id=>S.items.find(i=>i.id===id);
+const tglID=()=>new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d)return d}catch(e){}
+  let items=[];
+  try{const o=JSON.parse(localStorage.getItem("stokjajan")||"null");if(o&&o.items)items=o.items}catch(e){}
+  if(!items.length&&!localStorage.getItem("stokjajan_init"))items=SEED.map(s=>({id:uid(),name:s[0],unit:s[1],def:s[2],st:null,qty:0}));
+  return {items:items.map(i=>({sel:false,ord:false,...i})),grosir:[],lastG:""};
+}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 function stepper(i){return `<div class="step"><button data-a="m" data-id="${i.id}">−</button><b>${i.qty}</b><button data-a="p" data-id="${i.id}">+</button><span>${esc(i.unit)}</span></div>`}
-function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function selRows(){return S.items.filter(i=>i.st&&!i.ord&&i.sel).sort(byName)}
+function gSel(){return S.grosir.find(g=>g.id===S.lastG)||null}
+function build(rows,g){
+  const sapa=g?`Assalamualaikum ${g.name}, `:"Assalamualaikum, ";
+  return sapa+`mohon disiapkan barang berikut (${tglID()}):\n\n`+rows.map((i,n)=>`${n+1}. ${i.name} – ${i.qty} ${i.unit}`).join("\n")+"\n\nNanti saya ambil. Terima kasih 🙏";
+}
+function waLink(msg,g){
+  let n=g&&g.wa?g.wa.replace(/\D/g,""):"";
+  if(n.startsWith("0"))n="62"+n.slice(1);
+  return "https://wa.me/"+n+"?text="+encodeURIComponent(msg);
+}
 
-function render(){
+function renderBarang(){
   const q=$("q").value.trim().toLowerCase();
   const arr=S.items.filter(i=>i.name.toLowerCase().includes(q)).sort((a,b)=>(!!b.st-!!a.st)||byName(a,b));
-  $("list").innerHTML=arr.length?arr.map(i=>`<div class="row"><div class="top"><button class="nm" data-a="e" data-id="${i.id}">${esc(i.name)} <span class="un">· ${esc(i.unit)}</span></button><div class="st"><button class="h ${i.st==="h"?"on":""}" data-a="h" data-id="${i.id}">Habis</button><button class="t ${i.st==="t"?"on":""}" data-a="t" data-id="${i.id}">Tipis</button></div></div>${i.st?stepper(i):""}</div>`).join(""):`<div class="empty">Belum ada barang. Tap “+ Baru” untuk menambah.</div>`;
-  const need=S.items.filter(i=>i.st).sort(byName);
+  $("list").innerHTML=arr.length?arr.map(i=>`<div class="row"><div class="top"><button class="nm" data-a="e" data-id="${i.id}">${esc(i.name)} <span class="un">· ${esc(i.unit)}</span></button><div class="st"><button class="h ${i.st==="h"?"on":""}" data-a="h" data-id="${i.id}">Habis</button><button class="t ${i.st==="t"?"on":""}" data-a="t" data-id="${i.id}">Tipis</button></div></div>${i.st?stepper(i):""}</div>`).join(""):`<div class="empty">Belum ada barang. Tap “+ Baru”.</div>`;
+}
+function renderBelanja(){
+  const need=S.items.filter(i=>i.st&&!i.ord).sort(byName);
+  const ord=S.items.filter(i=>i.st&&i.ord).sort(byName);
+  const sel=selRows();
   $("tb").textContent="Belanja"+(need.length?" ("+need.length+")":"");
-  $("shop").innerHTML=need.length?need.map(i=>`<div class="row"><div class="top"><b>${esc(i.name)} ${i.st==="h"?"🔴":"🟡"}</b><button class="btn del" data-a="x" data-id="${i.id}">Hapus</button></div>${stepper(i)}</div>`).join(""):`<div class="empty">Daftar belanja kosong. Tandai barang “Habis” atau “Tipis” di tab Barang.</div>`;
-  const m=build();$("msg").textContent=need.length?m:"—";
-  $("send").href=need.length?link(m):"#";
-  $("send").style.opacity=$("copy").style.opacity=need.length?1:.4;
+  $("need").innerHTML=need.length?need.map(i=>`<div class="row"><label class="ck"><input type="checkbox" data-a="c" data-id="${i.id}" ${i.sel?"checked":""}><b>${esc(i.name)}</b><span class="badge ${i.st}">${i.st==="h"?"Habis":"Tipis"}</span></label>${i.sel?stepper(i):""}</div>`).join(""):`<div class="empty">Tidak ada barang tipis/habis. Tandai dulu di tab Barang.</div>`;
+  $("ord").innerHTML=ord.length?`<div class="sec">Sudah dipesan</div>`+ord.map(i=>`<div class="row"><div class="top"><span>✓ ${esc(i.name)} · ${i.qty} ${esc(i.unit)}</span><button class="btn" data-a="d" data-id="${i.id}">Sudah datang</button></div></div>`).join(""):"";
+  $("pv").textContent=sel.length?build(sel,gSel()):"Belum ada barang dipilih.";
+  ["bwa","bpng","bcopy","bord"].forEach(id=>$(id).disabled=!sel.length);
+  $("pall").disabled=!need.length;
+  $("pall").textContent=need.length&&need.every(i=>i.sel)?"Batal pilih":"Pilih semua";
 }
-function build(){
-  const need=S.items.filter(i=>i.st).sort(byName);
-  const t=new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
-  return "Assalamualaikum, mohon disiapkan barang berikut ("+t+"):\n\n"+need.map((i,n)=>(n+1)+". "+i.name+" – "+i.qty+" "+i.unit).join("\n")+"\n\nNanti saya ambil. Terima kasih 🙏";
+function renderGrosir(){
+  $("glist").innerHTML=S.grosir.length?S.grosir.map(g=>`<div class="row"><div class="top"><div><b>${esc(g.name)}</b><div class="un">${esc(g.wa||"nomor WA belum diisi")}</div></div><div class="acts2"><button class="btn" data-a="ge" data-id="${g.id}">Ubah</button><button class="btn del" data-a="gd" data-id="${g.id}">Hapus</button></div></div></div>`).join(""):`<div class="empty">Belum ada grosir. Tambah grosir pertama Anda.</div>`;
+  $("gsel").innerHTML=`<option value="">— Pilih grosir —</option>`+S.grosir.map(g=>`<option value="${g.id}" ${g.id===S.lastG?"selected":""}>${esc(g.name)}</option>`).join("");
 }
-function link(m){
-  let n=S.wa.replace(/\D/g,"");if(n.startsWith("0"))n="62"+n.slice(1);
-  return "https://wa.me/"+n+"?text="+encodeURIComponent(m);
+function render(){renderBarang();renderBelanja();renderGrosir()}
+
+function tab(k){
+  const T={a:"pa",b:"pb",c:"pc"};
+  for(const x in T){$(T[x]).classList.toggle("hide",x!==k);$("t"+x).classList.toggle("on",x===k)}
 }
-function tab(b){$("pa").classList.toggle("hide",b);$("pb").classList.toggle("hide",!b);$("ta").classList.toggle("on",!b);$("tb").classList.toggle("on",b)}
-$("ta").onclick=()=>tab(false);$("tb").onclick=()=>tab(true);
+$("ta").onclick=()=>tab("a");$("tb").onclick=()=>tab("b");$("tc").onclick=()=>tab("c");
 $("q").oninput=render;
-$("wa").value=S.wa;$("wa").oninput=e=>{S.wa=e.target.value;save();render()};
 
 document.body.addEventListener("click",e=>{
-  const b=e.target.closest("[data-a]");if(!b)return;
-  const i=find(b.dataset.id),a=b.dataset.a;if(!i)return;
-  if(a==="h"||a==="t"){if(i.st===a)i.st=null;else{i.st=a;if(!i.qty)i.qty=i.def||1}}
+  const b=e.target.closest("[data-a]");
+  if(!b||b.tagName==="INPUT")return;
+  const a=b.dataset.a;
+  if(a==="ge"){openG(b.dataset.id);return}
+  if(a==="gd"){
+    const g=S.grosir.find(x=>x.id===b.dataset.id);
+    if(g&&confirm("Hapus grosir "+g.name+"?")){S.grosir=S.grosir.filter(x=>x.id!==g.id);if(S.lastG===g.id)S.lastG="";save();render()}
+    return;
+  }
+  const i=find(b.dataset.id);
+  if(!i)return;
+  if(a==="e"){openM(i.id);return}
+  if(a==="h"||a==="t"){
+    if(i.st===a){i.st=null;i.ord=false;i.sel=false}
+    else{i.st=a;if(!i.qty)i.qty=i.def||1}
+  }
   else if(a==="p")i.qty++;
   else if(a==="m")i.qty=Math.max(1,i.qty-1);
-  else if(a==="x")i.st=null;
-  else if(a==="e"){openM(i.id);return}
+  else if(a==="d"){i.st=null;i.ord=false;i.sel=false;i.qty=0}
   save();render();
 });
+document.body.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.id==="gsel"){S.lastG=t.value;save();render();return}
+  if(t.dataset&&t.dataset.a==="c"){
+    const i=find(t.dataset.id);
+    if(i){i.sel=t.checked;if(i.sel&&!i.qty)i.qty=i.def||1;save();render()}
+  }
+});
 
+$("pall").onclick=()=>{
+  const need=S.items.filter(i=>i.st&&!i.ord);
+  const all=need.every(i=>i.sel);
+  need.forEach(i=>{i.sel=!all;if(!all&&!i.qty)i.qty=i.def||1});
+  save();render();
+};
+$("bwa").onclick=()=>{const r=selRows();if(r.length)window.open(waLink(build(r,gSel()),gSel()),"_blank")};
+$("bcopy").onclick=async()=>{
+  try{await navigator.clipboard.writeText($("pv").textContent)}catch(e){}
+  $("bcopy").textContent="Tersalin ✓";setTimeout(()=>$("bcopy").textContent="Salin teks",1500);
+};
+$("bord").onclick=()=>{
+  if(!confirm("Tandai barang terpilih sebagai sudah dipesan?"))return;
+  S.items.filter(i=>i.sel).forEach(i=>{i.ord=true;i.sel=false});
+  save();render();
+};
+
+function drawPNG(rows,g){
+  const W=720,RH=58,TOP=130,HH=56,H=TOP+HH+rows.length*RH+60;
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const x=cv.getContext("2d");
+  const cols=[{x:20,w:60,l:"No",a:"c"},{x:80,w:320,l:"Nama barang",a:"l"},{x:400,w:130,l:"Satuan",a:"c"},{x:530,w:170,l:"Jumlah",a:"c"}];
+  x.fillStyle="#fff";x.fillRect(0,0,W,H);
+  x.fillStyle="#0f7b5f";x.font="bold 34px system-ui, sans-serif";x.textBaseline="alphabetic";x.textAlign="left";
+  x.fillText("DAFTAR BELANJA",20,56);
+  x.fillStyle="#444";x.font="22px system-ui, sans-serif";
+  x.fillText((g?"Untuk: "+g.name:"Toko Jajanan")+"  |  "+tglID(),20,92);
+  x.fillStyle="#0f7b5f";x.fillRect(20,TOP,680,HH);
+  x.fillStyle="#fff";x.font="bold 20px system-ui, sans-serif";x.textBaseline="middle";
+  const cell=(t,c,yc,force)=>{
+    const txt=force||t;let s=txt;const maxW=c.w-16;
+    if(x.measureText(s).width>maxW){while(s.length>1&&x.measureText(s+"…").width>maxW)s=s.slice(0,-1);s+="…"}
+    x.textAlign=c.a==="l"?"left":"center";
+    x.fillText(s,c.a==="l"?c.x+12:c.x+c.w/2,yc);
+  };
+  cols.forEach(c=>cell("",c,TOP+HH/2,c.l));
+  rows.forEach((r,n)=>{
+    const y=TOP+HH+n*RH;
+    if(n%2===0){x.fillStyle="#f3f6f4";x.fillRect(20,y,680,RH)}
+    x.font="20px system-ui, sans-serif";x.fillStyle="#1c1b18";x.textBaseline="middle";
+    cell(String(n+1),cols[0],y+RH/2);
+    cell(r.name,cols[1],y+RH/2);
+    cell(r.unit,cols[2],y+RH/2);
+    x.font="bold 20px system-ui, sans-serif";
+    cell(String(r.qty),cols[3],y+RH/2);
+    x.strokeStyle="#dddddd";x.lineWidth=1;x.beginPath();x.moveTo(20,y+RH+.5);x.lineTo(700,y+RH+.5);x.stroke();
+  });
+  x.strokeStyle="#0f7b5f";x.lineWidth=2;x.strokeRect(20,TOP,680,HH+rows.length*RH);
+  x.fillStyle="#6b685f";x.font="18px system-ui, sans-serif";x.textAlign="left";x.textBaseline="alphabetic";
+  x.fillText("Terima kasih",20,H-22);
+  return cv;
+}
+async function kirimPNG(){
+  const rows=selRows();if(!rows.length)return;
+  const g=gSel();
+  const blob=await new Promise(r=>drawPNG(rows,g).toBlob(r,"image/png"));
+  const name="daftar-belanja-"+new Date().toISOString().slice(0,10)+".png";
+  const file=new File([blob],name,{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:"Daftar belanja"})}catch(e){}
+    return;
+  }
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+$("bpng").onclick=kirimPNG;
+
+let editId=null,editG=null;
 function openM(id){
   editId=id;const i=id&&find(id);
   $("mt").textContent=i?"Ubah barang":"Barang baru";
   $("f1").value=i?i.name:"";$("f2").value=i?i.unit:"pcs";$("f3").value=i?i.def:1;
-  $("fd").classList.toggle("hide",!i);$("md").classList.add("show");setTimeout(()=>$("f1").focus(),50);
+  $("fd").classList.toggle("hide",!i);
+  $("md").classList.add("show");setTimeout(()=>$("f1").focus(),50);
 }
 $("add").onclick=()=>openM(null);
 $("fc").onclick=()=>$("md").classList.remove("show");
@@ -140,24 +273,31 @@ $("fs").onclick=()=>{
   const name=$("f1").value.trim();if(!name){$("f1").focus();return}
   const def=Math.max(1,parseInt($("f3").value)||1),unit=$("f2").value;
   if(editId){const i=find(editId);i.name=name;i.unit=unit;i.def=def}
-  else S.items.push({id:uid(),name,unit,def,st:null,qty:0});
+  else S.items.push({id:uid(),name,unit,def,st:null,qty:0,sel:false,ord:false});
   save();$("md").classList.remove("show");render();
 };
 $("fd").onclick=()=>{
-  if($("fd").dataset.c){S.items=S.items.filter(i=>i.id!==editId);save();$("md").classList.remove("show");$("fd").textContent="Hapus";delete $("fd").dataset.c;render();return}
-  $("fd").dataset.c=1;$("fd").textContent="Yakin hapus?";
-  setTimeout(()=>{$("fd").textContent="Hapus";delete $("fd").dataset.c},3000);
+  const i=find(editId);if(!i)return;
+  if(confirm("Hapus "+i.name+"?")){S.items=S.items.filter(x=>x.id!==editId);save();$("md").classList.remove("show");render()}
 };
-$("copy").onclick=async()=>{
-  const m=build();
-  try{await navigator.clipboard.writeText(m)}catch(e){const t=document.createElement("textarea");t.value=m;document.body.appendChild(t);t.select();try{document.execCommand("copy")}catch(_){}t.remove()}
-  $("copy").textContent="Tersalin ✓";setTimeout(()=>$("copy").textContent="Salin teks",1500);
+
+function openG(id){
+  editG=id;const g=id&&S.grosir.find(x=>x.id===id);
+  $("gt").textContent=g?"Ubah grosir":"Grosir baru";
+  $("gn").value=g?g.name:"";$("gw").value=g?g.wa:"";
+  $("mg").classList.add("show");setTimeout(()=>$("gn").focus(),50);
+}
+$("gadd").onclick=()=>openG(null);
+$("gc").onclick=()=>$("mg").classList.remove("show");
+$("gs").onclick=()=>{
+  const name=$("gn").value.trim();if(!name){$("gn").focus();return}
+  const wa=$("gw").value.trim();
+  if(editG){const g=S.grosir.find(x=>x.id===editG);g.name=name;g.wa=wa}
+  else{const id=uid();S.grosir.push({id,name,wa});if(!S.lastG)S.lastG=id}
+  save();$("mg").classList.remove("show");render();
 };
-$("done").onclick=()=>{
-  if($("done").dataset.c){S.items.forEach(i=>{i.st=null;i.qty=0});save();render();$("done").textContent="Selesai belanja (kosongkan)";delete $("done").dataset.c;return}
-  $("done").dataset.c=1;$("done").textContent="Yakin? Tap sekali lagi";
-  setTimeout(()=>{$("done").textContent="Selesai belanja (kosongkan)";delete $("done").dataset.c},3000);
-};
+
+tab("a");
 render();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script></body></html>
