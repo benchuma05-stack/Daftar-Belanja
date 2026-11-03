@@ -92,7 +92,8 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
   <b>Cadangan data</b>
   <div class="un" style="margin:4px 0 6px">Jika file tidak tersimpan, salin teks ini lalu simpan di WhatsApp ke diri sendiri.</div>
   <textarea id="bt" readonly rows="4" style="font-size:12px"></textarea>
-  <div class="acts" style="margin:8px 0"><button class="btn" id="bcp">Salin teks</button></div>
+  <div class="acts" style="margin:8px 0"><button class="btn pri" id="bcp">Salin teks</button><button class="btn" id="bsh">Bagikan</button></div>
+  <div class="acts" style="margin-bottom:8px"><a class="btn" id="bdl">Unduh file</a></div>
   <label>Atau tempel teks cadangan untuk memulihkan</label>
   <textarea id="rt" rows="4" placeholder="Tempel teks cadangan di sini" style="font-size:12px"></textarea>
   <div class="acts" style="margin-top:8px"><button class="btn" id="bx">Tutup</button><button class="btn del" id="rtgo">Pulihkan dari teks</button></div>
@@ -416,23 +417,14 @@ function belanjaUlang(id){
 }
 
 function simpanCadangan(){
-  const txt=JSON.stringify({app:"stok-jajanan",versi:9,dibuat:new Date().toISOString(),data:S});
+  const txt=JSON.stringify({app:"stok-jajanan",versi:10,dibuat:new Date().toISOString(),data:S});
   const name="cadangan-stok-jajanan-"+new Date().toISOString().slice(0,10)+".json";
   $("bt").value=txt;
-  try{
-    const file=new File([new Blob([txt],{type:"application/json"})],name,{type:"application/json"});
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      navigator.share({files:[file],title:"Cadangan stok jajanan"}).catch(function(){});
-      return;
-    }
-  }catch(e){}
-  try{
-    const url=URL.createObjectURL(new Blob([txt],{type:"application/json"}));
-    const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),5000);
-  }catch(e){}
+  $("bdl").href="data:application/json;charset=utf-8,"+encodeURIComponent(txt);
+  $("bdl").download=name;
   $("mb").classList.add("show");
 }
+
 function terapkan(txt){
   let o;
   try{o=JSON.parse(txt)}catch(e){throw new Error("teks bukan cadangan yang valid")}
@@ -457,9 +449,22 @@ $("rf").onchange=e=>{
   r.readAsText(f);
 };
 $("bcp").onclick=()=>{
-  const t=$("bt");t.select();
-  try{document.execCommand("copy")}catch(e){}
-  $("bcp").textContent="Tersalin ✓";setTimeout(()=>$("bcp").textContent="Salin teks",1500);
+  const t=$("bt");
+  t.focus();t.select();t.setSelectionRange(0,t.value.length);
+  let ok=false;
+  try{ok=document.execCommand("copy")}catch(e){}
+  if(ok){$("bcp").textContent="Tersalin ✓";setTimeout(()=>$("bcp").textContent="Salin teks",1500);return}
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(t.value).then(()=>alert("Teks cadangan sudah disalin."),()=>alert("Gagal menyalin otomatis. Tekan lama teks di kotak, lalu pilih Salin."));
+    return;
+  }
+  alert("Gagal menyalin otomatis. Tekan lama teks di kotak, lalu pilih Salin.");
+};
+$("bsh").onclick=()=>{
+  if(!navigator.share){alert("Browser ini belum mendukung Bagikan. Pakai Salin teks.");return}
+  navigator.share({title:"Cadangan stok jajanan",text:$("bt").value}).catch(err=>{
+    if(err&&err.name!=="AbortError")alert("Gagal membagikan. Pakai Salin teks.");
+  });
 };
 $("bx").onclick=()=>$("mb").classList.remove("show");
 $("rtgo").onclick=()=>{
