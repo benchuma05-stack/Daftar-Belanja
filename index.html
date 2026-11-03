@@ -262,19 +262,34 @@ function drawPNG(rows,g){
   x.fillText("Terima kasih",20,H-22);
   return cv;
 }
+function showPNG(url,name){
+  let m=$("mp");
+  if(!m){
+    m=document.createElement("div");m.id="mp";m.className="modal";
+    m.innerHTML='<div class="sheet" style="max-height:90vh;overflow:auto"><b>Tabel belanja</b><div class="un" style="margin:4px 0 8px">Tekan lama gambar, lalu pilih Simpan gambar atau Bagikan, dan kirim ke WhatsApp.</div><img id="mpi" style="width:100%;border:1px solid var(--bd);border-radius:8px;background:#fff"><div class="acts" style="margin-top:12px"><a class="btn pri" id="mpd">Unduh</a><button class="btn" id="mpx">Tutup</button></div></div>';
+    document.body.appendChild(m);
+    $("mpx").onclick=()=>m.classList.remove("show");
+  }
+  $("mpi").src=url;$("mpd").href=url;$("mpd").download=name;
+  m.classList.add("show");
+}
 async function kirimPNG(){
   const rows=selRows();if(!rows.length)return;
-  const g=gSel();
-  const blob=await new Promise(r=>drawPNG(rows,g).toBlob(r,"image/png"));
+  let url;
+  try{url=drawPNG(rows,gSel()).toDataURL("image/png")}
+  catch(err){alert("Gagal membuat tabel PNG: "+err.message);return}
   const name="daftar-belanja-"+new Date().toISOString().slice(0,10)+".png";
-  const file=new File([blob],name,{type:"image/png"});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],title:"Daftar belanja"})}catch(e){}
-    return;
+  try{
+    const blob=await (await fetch(url)).blob();
+    const file=new File([blob],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"Daftar belanja"});
+      return;
+    }
+  }catch(err){
+    if(err&&err.name==="AbortError")return;
   }
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  showPNG(url,name);
 }
 $("bpng").onclick=kirimPNG;
 
