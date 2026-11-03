@@ -22,7 +22,7 @@ h1{font-size:20px;margin:14px 0 8px}
 .tabs button{flex:1;padding:11px 4px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-size:15px;font-weight:600}
 .tabs button.on{background:var(--ac);color:var(--on);border-color:var(--ac)}
 .bar{display:flex;gap:8px;margin:8px 0;align-items:center}
-input,select{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}
 .btn{padding:11px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-weight:600;white-space:nowrap;cursor:pointer}
 .btn:disabled{opacity:.4;cursor:default}
 .btn.pri{background:var(--ac);color:var(--on);border-color:var(--ac)}
@@ -82,7 +82,21 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 <div id="pc" class="hide">
   <div class="bar"><span class="un" style="flex:1">Daftar grosir dan nomor WA</span><button class="btn pri" id="gadd">+ Grosir</button></div>
   <div id="glist"></div>
+  <div class="sec">Cadangan data</div>
+  <div class="un" style="margin:0 4px 8px">Data hanya tersimpan di browser HP ini. Simpan cadangan sebelum pindah ke Chrome atau HP lain, lalu pulihkan di sana.</div>
+  <div class="acts"><button class="btn pri" id="bsave">Simpan cadangan</button><button class="btn" id="brest">Pulihkan dari file</button></div>
+  <input type="file" id="rf" accept=".json,application/json" style="display:none">
 </div>
+
+<div class="modal" id="mb"><div class="sheet" style="max-height:90vh;overflow:auto">
+  <b>Cadangan data</b>
+  <div class="un" style="margin:4px 0 6px">Jika file tidak tersimpan, salin teks ini lalu simpan di WhatsApp ke diri sendiri.</div>
+  <textarea id="bt" readonly rows="4" style="font-size:12px"></textarea>
+  <div class="acts" style="margin:8px 0"><button class="btn" id="bcp">Salin teks</button></div>
+  <label>Atau tempel teks cadangan untuk memulihkan</label>
+  <textarea id="rt" rows="4" placeholder="Tempel teks cadangan di sini" style="font-size:12px"></textarea>
+  <div class="acts" style="margin-top:8px"><button class="btn" id="bx">Tutup</button><button class="btn del" id="rtgo">Pulihkan dari teks</button></div>
+</div></div>
 
 <div class="modal" id="md"><div class="sheet">
   <b id="mt">Barang baru</b>
@@ -124,7 +138,7 @@ function load(){
   let items=[];
   try{const o=JSON.parse(localStorage.getItem("stokjajan")||"null");if(o&&o.items)items=o.items}catch(e){}
   if(!items.length&&!localStorage.getItem("stokjajan_init"))items=SEED.map(s=>({id:uid(),name:s[0],unit:s[1],def:s[2],st:null,qty:0}));
-  return {items:items.map(i=>({sel:false,...i})),grosir:[],lastG:"",riwayat:[]};
+  return {items:items.map(i=>Object.assign({sel:false},i)),grosir:[],lastG:"",riwayat:[]};
 }
 let S=load();
 S.items.forEach(i=>{if(i.ord){i.st=null;i.qty=0}i.ord=false});
@@ -161,7 +175,7 @@ function renderBelanja(){
 }
 const fmtTgl=iso=>new Date(iso).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
 function renderRiwayat(){
-  const recs=[...S.riwayat].sort((a,b)=>b.date.localeCompare(a.date));
+  const recs=S.riwayat.slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!recs.length){$("rlist").innerHTML=`<div class="empty">Belum ada riwayat. Di tab Belanja, centang barang, pilih grosir, lalu tekan “Pindah ke riwayat”.</div>`;return}
   const groups={};
   recs.forEach(r=>{(groups[r.grosir]=groups[r.grosir]||[]).push(r)});
@@ -284,21 +298,22 @@ function showPNG(url,name){
   $("mpi").src=url;$("mpd").href=url;$("mpd").download=name;
   m.classList.add("show");
 }
+function dataURLToBlob(u){
+  const bin=atob(u.split(",")[1]);const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:"image/png"});
+}
 async function kirimPNG(){
   const rows=selRows();if(!rows.length)return;
   let url;
   try{url=drawPNG(rows,gSel()).toDataURL("image/png")}
   catch(err){alert("Gagal membuat tabel PNG: "+err.message);return}
   const name="daftar-belanja-"+new Date().toISOString().slice(0,10)+".png";
-  try{
-    const blob=await (await fetch(url)).blob();
-    const file=new File([blob],name,{type:"image/png"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:"Daftar belanja"});
-      return;
-    }
-  }catch(err){
-    if(err&&err.name==="AbortError")return;
+  if(window.File&&navigator.share&&navigator.canShare){
+    try{
+      const file=new File([dataURLToBlob(url)],name,{type:"image/png"});
+      if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Daftar belanja"});return}
+    }catch(err){if(err&&err.name==="AbortError")return}
   }
   showPNG(url,name);
 }
@@ -399,6 +414,58 @@ function belanjaUlang(id){
   S.lastG=g?g.id:"";
   save();tab("b");render();
 }
+
+function simpanCadangan(){
+  const txt=JSON.stringify({app:"stok-jajanan",versi:9,dibuat:new Date().toISOString(),data:S});
+  const name="cadangan-stok-jajanan-"+new Date().toISOString().slice(0,10)+".json";
+  $("bt").value=txt;
+  try{
+    const file=new File([new Blob([txt],{type:"application/json"})],name,{type:"application/json"});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:"Cadangan stok jajanan"}).catch(function(){});
+      return;
+    }
+  }catch(e){}
+  try{
+    const url=URL.createObjectURL(new Blob([txt],{type:"application/json"}));
+    const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }catch(e){}
+  $("mb").classList.add("show");
+}
+function terapkan(txt){
+  let o;
+  try{o=JSON.parse(txt)}catch(e){throw new Error("teks bukan cadangan yang valid")}
+  const d=o.data||o;
+  if(!Array.isArray(d.items)||!Array.isArray(d.grosir))throw new Error("format cadangan tidak dikenali");
+  const riwayat=Array.isArray(d.riwayat)?d.riwayat:[];
+  if(!confirm("Pulihkan cadangan ini?\n\n"+d.items.length+" barang, "+d.grosir.length+" grosir, "+riwayat.length+" riwayat.\n\nData yang ada di HP ini sekarang akan DIGANTI."))return false;
+  S={items:d.items.map(i=>Object.assign({id:uid(),sel:false,ord:false,qty:0,st:null},i)),grosir:d.grosir,lastG:typeof d.lastG==="string"?d.lastG:"",riwayat:riwayat};
+  save();render();
+  return true;
+}
+$("bsave").onclick=simpanCadangan;
+$("brest").onclick=()=>$("rf").click();
+$("rf").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{if(terapkan(String(r.result)))alert("Cadangan berhasil dipulihkan.")}
+    catch(err){alert("Gagal memulihkan: "+err.message)}
+    e.target.value="";
+  };
+  r.readAsText(f);
+};
+$("bcp").onclick=()=>{
+  const t=$("bt");t.select();
+  try{document.execCommand("copy")}catch(e){}
+  $("bcp").textContent="Tersalin ✓";setTimeout(()=>$("bcp").textContent="Salin teks",1500);
+};
+$("bx").onclick=()=>$("mb").classList.remove("show");
+$("rtgo").onclick=()=>{
+  try{if(terapkan($("rt").value)){$("mb").classList.remove("show");alert("Cadangan berhasil dipulihkan.")}}
+  catch(err){alert("Gagal memulihkan: "+err.message)}
+};
 
 tab("a");
 render();
