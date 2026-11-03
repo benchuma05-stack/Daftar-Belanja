@@ -72,7 +72,8 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
   <div class="acts" style="margin:10px 0"><button class="btn del" id="kosong">Kosongkan daftar</button></div>
   <div class="sec">Pratinjau pesan</div>
   <div class="pv" id="pv"></div>
-  <div class="acts"><button class="btn pri" id="bwa">Kirim teks ke WA</button><button class="btn" id="bpng">Kirim tabel PNG</button></div>
+  <div class="acts"><button class="btn pri" id="bwa">Kirim ke WA</button><button class="btn" id="bshare">Bagikan teks</button></div>
+  <div class="acts" style="margin-top:8px"><button class="btn" id="bpng">Kirim tabel PNG</button></div>
   <div class="acts" style="margin-top:8px"><button class="btn" id="bcopy">Salin teks</button><button class="btn pri" id="bpindah">Pindah ke riwayat</button></div>
 </div>
 
@@ -153,7 +154,7 @@ function renderBelanja(){
   $("tb").textContent="Belanja"+(need.length?" ("+need.length+")":"");
   $("need").innerHTML=need.length?need.map(i=>`<div class="row"><label class="ck"><input type="checkbox" data-a="c" data-id="${i.id}" ${i.sel?"checked":""}><b>${esc(i.name)}</b><span class="badge ${i.st}">${i.st==="h"?"Habis":"Tipis"}</span></label>${i.sel?stepper(i):""}</div>`).join(""):`<div class="empty">Tidak ada barang tipis/habis. Tandai dulu di tab Barang.</div>`;
   $("pv").textContent=sel.length?build(sel,gSel()):"Belum ada barang dipilih.";
-  ["bwa","bpng","bcopy","bpindah"].forEach(id=>$(id).disabled=!sel.length);
+  ["bwa","bshare","bpng","bcopy","bpindah"].forEach(id=>$(id).disabled=!sel.length);
   $("kosong").disabled=!need.length;
   $("pall").disabled=!need.length;
   $("pall").textContent=need.length&&need.every(i=>i.sel)?"Batal pilih":"Pilih semua";
@@ -221,7 +222,17 @@ $("pall").onclick=()=>{
   need.forEach(i=>{i.sel=!all;if(!all&&!i.qty)i.qty=i.def||1});
   save();render();
 };
-$("bwa").onclick=()=>{const r=selRows();if(r.length)window.open(waLink(build(r,gSel()),gSel()),"_blank")};
+$("bwa").onclick=()=>{
+  const r=selRows();if(!r.length)return;
+  const g=gSel(),msg=build(r,g);
+  let n=g&&g.wa?g.wa.replace(/\D/g,""):"";
+  if(n.startsWith("0"))n="62"+n.slice(1);
+  location.href="whatsapp://send?"+(n?"phone="+n+"&":"")+"text="+encodeURIComponent(msg);
+};
+$("bshare").onclick=async()=>{
+  const r=selRows();if(!r.length)return;
+  try{await navigator.share({title:"Daftar belanja",text:build(r,gSel())})}catch(e){}
+};
 $("bcopy").onclick=async()=>{
   try{await navigator.clipboard.writeText($("pv").textContent)}catch(e){}
   $("bcopy").textContent="Tersalin ✓";setTimeout(()=>$("bcopy").textContent="Salin teks",1500);
